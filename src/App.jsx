@@ -5,7 +5,8 @@ import Header from "./components/Header.jsx";
 import Home from "./pages/Home.jsx";
 import InventoryHub from "./pages/InventoryHub.jsx";
 import InventoryEquipment from "./pages/InventoryEquipment.jsx";
-import InventoryInUse from "./pages/InventoryInUse.jsx";
+// 👇 this is your real file name/path
+import InventoryInUse from "./pages/inventory-in-use.jsx";
 import ShowSpecs from "./pages/ShowSpecs.jsx";
 import Venues from "./pages/Venues.jsx";
 import Suppliers from "./pages/Suppliers.jsx";
@@ -35,7 +36,7 @@ export default function App() {
 
       {page === "home" && <Home setPage={setPage} />}
 
-      {/* 👇 INVENTORY PAGES */}
+      {/* INVENTORY */}
       {page === "inventory-hub" && <InventoryHub setPage={setPage} />}
       {page === "inventory-equipment" && (
         <InventoryEquipment setPage={setPage} />
