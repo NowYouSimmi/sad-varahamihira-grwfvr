@@ -10,10 +10,16 @@ export default function InventoryHub({ setPage }) {
       </p>
 
       <div className="home-actions" style={{ maxWidth: "360px" }}>
-        <button className="btn dark" onClick={() => setPage("inventory-eq")}>
+        <button
+          className="btn dark"
+          onClick={() => setPage("inventory-equipment")}
+        >
           Equipment
         </button>
-        <button className="btn dark" onClick={() => setPage("inventory-inuse")}>
+        <button
+          className="btn dark"
+          onClick={() => setPage("inventory-inuse")}
+        >
           In use
         </button>
       </div>
@@ -28,3 +34,4 @@ export default function InventoryHub({ setPage }) {
     </div>
   );
 }
+
