@@ -27,7 +27,7 @@ export default function InventoryEquipment({ setPage }) {
   const [txPerson, setTxPerson] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // shows for dropdown
+  // shows
   const [shows, setShows] = useState([]);
   const [loadingShows, setLoadingShows] = useState(false);
   const [errorShows, setErrorShows] = useState("");
@@ -107,7 +107,7 @@ export default function InventoryEquipment({ setPage }) {
     });
   }, [items, tx]);
 
-  // active usage per item → lets search pick up locations
+  // build “where is it now” per item
   const usageByItem = useMemo(() => buildActiveUsageMap(tx), [tx]);
 
   // categories
@@ -129,6 +129,7 @@ export default function InventoryEquipment({ setPage }) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items
+      // drop blank rows
       .filter((it) => {
         const hasAny =
           (it.name && it.name.trim()) ||
@@ -137,12 +138,14 @@ export default function InventoryEquipment({ setPage }) {
           Number(it.quantity || 0) > 0;
         return hasAny;
       })
+      // category filter
       .filter((it) => {
         if (categoryFilter && (it.category || "").trim() !== categoryFilter) {
           return false;
         }
         return true;
       })
+      // search (item + active checkouts’ venue/event)
       .filter((it) => {
         if (!q) return true;
 
@@ -161,6 +164,7 @@ export default function InventoryEquipment({ setPage }) {
 
         return false;
       })
+      // sort
       .sort((a, b) => {
         const at = (a.type || "").toLowerCase();
         const bt = (b.type || "").toLowerCase();
@@ -169,7 +173,7 @@ export default function InventoryEquipment({ setPage }) {
       });
   }, [items, query, categoryFilter, usageByItem]);
 
-  // leave category view when user searches or filters
+  // leave category view when user searches/filters
   useEffect(() => {
     if (query.trim() !== "" || categoryFilter.trim() !== "") {
       setShowCategories(false);
@@ -239,6 +243,7 @@ export default function InventoryEquipment({ setPage }) {
       setTx(nextTx);
       setAvailability(nextAvail);
 
+      // reset modal
       setTxItem(null);
       setTxQty("1");
       setTxEvent("");
@@ -318,6 +323,7 @@ export default function InventoryEquipment({ setPage }) {
       {/* CATEGORY VIEW */}
       {!loading && showCategories && (
         <div className="grid" style={{ marginTop: 16 }}>
+          {/* "All items" tile */}
           <div
             className="card clickable"
             onClick={() => {
@@ -494,6 +500,7 @@ export default function InventoryEquipment({ setPage }) {
 
             {txMode === "checkout" && (
               <>
+                {/* select a show (pulled from Stage sheet) */}
                 <div className="field">
                   <label>Assign to show (optional)</label>
                   <select
@@ -521,6 +528,7 @@ export default function InventoryEquipment({ setPage }) {
                   </select>
                 </div>
 
+                {/* custom event title */}
                 <div className="field">
                   <label>Event / Show (optional)</label>
                   <input
@@ -668,7 +676,6 @@ function computeAvailability(nextItems, nextTx) {
 
 /**
  * build “where is it now” per item
- * returns { [itemId]: [{eventTitle, location, qty}, ...] }
  */
 function buildActiveUsageMap(tx) {
   const byItem = {};
