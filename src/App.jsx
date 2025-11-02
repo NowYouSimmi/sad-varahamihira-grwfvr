@@ -35,9 +35,10 @@ export default function App() {
       <Header setPage={setPage} page={page} />
 
       {page === "home" && <Home setPage={setPage} />}
-      {page === "inventory" && <InventoryHub setPage={setPage} />}
-      {page === "inventory-eq" && <InventoryEquipment setPage={setPage} />}
-      {page === "inventory-inuse" && <InventoryInUse setPage={setPage} />}
+    {page === "inventory-hub" && <InventoryHub setPage={setPage} />}
+{page === "inventory-equipment" && <InventoryEquipment setPage={setPage} />}
+{page === "inventory-inuse" && <InventoryInUse setPage={setPage} />}
+
       {page === "showList" && <ShowSpecs />}
       {page === "venues" && (
         <Venues openPDF={openPDF} openGallery={openGallery} setPage={setPage} />
