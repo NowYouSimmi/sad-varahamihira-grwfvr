@@ -1,4 +1,4 @@
-// src/pages/InventoryInUse.jsx
+// src/pages/inventory-in-use.jsx
 import React, { useEffect, useMemo, useState } from "react";
 
 const DATA_URL =
@@ -38,7 +38,9 @@ export default function InventoryInUse({ setPage }) {
       const related = tx.filter((t) => t.id === item.id);
       const countOut = related
         .map((t) =>
-          t.action === "checkout" ? Number(t.qty || 0) : -Number(t.qty || 0)
+          String(t.action || "").toLowerCase() === "checkout"
+            ? Number(t.qty || 0)
+            : -Number(t.qty || 0)
         )
         .reduce((a, b) => a + b, 0);
       if (countOut > 0) {
@@ -89,6 +91,12 @@ export default function InventoryInUse({ setPage }) {
             )}
           </div>
         ))}
+
+      {!loading && !err && inUseList.length === 0 && (
+        <p className="muted" style={{ marginTop: "1rem" }}>
+          Nothing is currently checked out.
+        </p>
+      )}
     </div>
   );
 }
