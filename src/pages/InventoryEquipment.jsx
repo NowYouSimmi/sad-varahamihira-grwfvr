@@ -262,9 +262,10 @@ export default function InventoryEquipment({ setPage }) {
   return (
     <div className="page">
       <h1>Inventory – Equipment</h1>
-      <button className="btn ghost" onClick={() => setPage("inventory")}>
-        ← Back
-      </button>
+      <button className="btn ghost" onClick={() => setPage("inventory-hub")}>
+  ← Back
+</button>
+
 
       {/* search + category stays at the top ALWAYS */}
       <div
@@ -731,3 +732,4 @@ function buildInUseForItem(item, tx) {
     })
     .filter((r) => r.qty > 0);
 }
+
