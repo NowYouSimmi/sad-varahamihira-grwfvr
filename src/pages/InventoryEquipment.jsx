@@ -15,10 +15,10 @@ export default function InventoryEquipment({ setPage }) {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [showCategories, setShowCategories] = useState(true);
 
-  // was missing before
+  // see-in-use modal
   const [inUseModal, setInUseModal] = useState(null);
 
-  // modal state
+  // checkout/checkin modal state
   const [txItem, setTxItem] = useState(null);
   const [txMode, setTxMode] = useState("checkout");
   const [txQty, setTxQty] = useState("1");
@@ -27,7 +27,7 @@ export default function InventoryEquipment({ setPage }) {
   const [txPerson, setTxPerson] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // shows for checkout
+  // shows for dropdown
   const [shows, setShows] = useState([]);
   const [loadingShows, setLoadingShows] = useState(false);
   const [errorShows, setErrorShows] = useState("");
@@ -98,7 +98,7 @@ export default function InventoryEquipment({ setPage }) {
     loadShows();
   }, []);
 
-  // recompute availability if we only got items/tx
+  // recompute availability if needed
   useEffect(() => {
     if (!items.length) return;
     setAvailability((prev) => {
@@ -107,12 +107,10 @@ export default function InventoryEquipment({ setPage }) {
     });
   }, [items, tx]);
 
-  // 👇 build “active usage per item” so search can hit locations
-  const usageByItem = useMemo(() => {
-    return buildActiveUsageMap(tx);
-  }, [tx]);
+  // active usage per item → lets search pick up locations
+  const usageByItem = useMemo(() => buildActiveUsageMap(tx), [tx]);
 
-  // build categories (skip blank rows)
+  // categories
   const categories = useMemo(() => {
     const s = new Set();
     items.forEach((it) => {
@@ -130,54 +128,48 @@ export default function InventoryEquipment({ setPage }) {
   // filtered items
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (
-      items
-        // drop blank rows
-        .filter((it) => {
-          const hasAny =
-            (it.name && it.name.trim()) ||
-            (it.type && it.type.trim()) ||
-            (it.category && it.category.trim()) ||
-            Number(it.quantity || 0) > 0;
-          return hasAny;
-        })
-        // category filter
-        .filter((it) => {
-          if (categoryFilter && (it.category || "").trim() !== categoryFilter) {
-            return false;
-          }
-          return true;
-        })
-        // search (item fields + active checkouts’ venue/event)
-        .filter((it) => {
-          if (!q) return true;
-
-          const baseHay = `${it.name || ""} ${it.type || ""} ${
-            it.category || ""
-          }`.toLowerCase();
-          if (baseHay.includes(q)) return true;
-
-          const usages = usageByItem[it.id] || [];
-          const locHay = usages
-            .map((u) =>
-              `${u.location || ""} ${u.eventTitle || ""}`.toLowerCase().trim()
-            )
-            .join(" ");
-          if (locHay && locHay.includes(q)) return true;
-
+    return items
+      .filter((it) => {
+        const hasAny =
+          (it.name && it.name.trim()) ||
+          (it.type && it.type.trim()) ||
+          (it.category && it.category.trim()) ||
+          Number(it.quantity || 0) > 0;
+        return hasAny;
+      })
+      .filter((it) => {
+        if (categoryFilter && (it.category || "").trim() !== categoryFilter) {
           return false;
-        })
-        // sort
-        .sort((a, b) => {
-          const at = (a.type || "").toLowerCase();
-          const bt = (b.type || "").toLowerCase();
-          if (at && bt && at !== bt) return at.localeCompare(bt);
-          return (a.name || "").localeCompare(b.name || "");
-        })
-    );
+        }
+        return true;
+      })
+      .filter((it) => {
+        if (!q) return true;
+
+        const baseHay = `${it.name || ""} ${it.type || ""} ${
+          it.category || ""
+        }`.toLowerCase();
+        if (baseHay.includes(q)) return true;
+
+        const usages = usageByItem[it.id] || [];
+        const locHay = usages
+          .map((u) =>
+            `${u.location || ""} ${u.eventTitle || ""}`.toLowerCase().trim()
+          )
+          .join(" ");
+        if (locHay && locHay.includes(q)) return true;
+
+        return false;
+      })
+      .sort((a, b) => {
+        const at = (a.type || "").toLowerCase();
+        const bt = (b.type || "").toLowerCase();
+        if (at && bt && at !== bt) return at.localeCompare(bt);
+        return (a.name || "").localeCompare(b.name || "");
+      });
   }, [items, query, categoryFilter, usageByItem]);
 
-  // if user types or picks category → leave category grid
+  // leave category view when user searches or filters
   useEffect(() => {
     if (query.trim() !== "" || categoryFilter.trim() !== "") {
       setShowCategories(false);
@@ -188,12 +180,14 @@ export default function InventoryEquipment({ setPage }) {
   async function submitTx(e) {
     e.preventDefault();
     if (!txItem) return;
+
     const av = availability[txItem.id] || {
       available: txItem.quantity || 0,
       inUse: 0,
       total: txItem.quantity || 0,
     };
     const qty = Number(txQty || 0);
+
     if (!qty || qty < 1) {
       setErr("Quantity must be at least 1.");
       return;
@@ -217,13 +211,13 @@ export default function InventoryEquipment({ setPage }) {
         qty: String(qty),
         eventTitle: txEvent || "",
         location: txLocation || "",
-        // 👇 send the optional person name
         personName: txPerson || "",
       });
       const r = await fetch(`${DATA_URL}?${params.toString()}`, {
         cache: "no-store",
       });
       const json = await r.json();
+
       const rawItems = Array.isArray(json) ? json : json.items || [];
       const normItems = rawItems.map((row, i) => ({
         id: row.id || `ROW-${i + 2}`,
@@ -245,7 +239,6 @@ export default function InventoryEquipment({ setPage }) {
       setTx(nextTx);
       setAvailability(nextAvail);
 
-      // reset form
       setTxItem(null);
       setTxQty("1");
       setTxEvent("");
@@ -263,11 +256,10 @@ export default function InventoryEquipment({ setPage }) {
     <div className="page">
       <h1>Inventory – Equipment</h1>
       <button className="btn ghost" onClick={() => setPage("inventory-hub")}>
-  ← Back
-</button>
+        ← Back
+      </button>
 
-
-      {/* search + category stays at the top ALWAYS */}
+      {/* search + category */}
       <div
         style={{
           display: "flex",
@@ -323,10 +315,9 @@ export default function InventoryEquipment({ setPage }) {
         </div>
       )}
 
-      {/* ====== CATEGORY GRID VIEW ====== */}
+      {/* CATEGORY VIEW */}
       {!loading && showCategories && (
         <div className="grid" style={{ marginTop: 16 }}>
-          {/* "All items" tile */}
           <div
             className="card clickable"
             onClick={() => {
@@ -368,7 +359,7 @@ export default function InventoryEquipment({ setPage }) {
         </div>
       )}
 
-      {/* ====== LIST VIEW ====== */}
+      {/* LIST VIEW */}
       {!loading &&
         !showCategories &&
         filtered.map((it) => {
@@ -503,7 +494,6 @@ export default function InventoryEquipment({ setPage }) {
 
             {txMode === "checkout" && (
               <>
-                {/* select a show (pulled from Stage sheet) */}
                 <div className="field">
                   <label>Assign to show (optional)</label>
                   <select
@@ -511,7 +501,6 @@ export default function InventoryEquipment({ setPage }) {
                     onChange={(e) => {
                       const val = e.target.value;
                       setTxEvent(val);
-                      // if this value is one of the shows, autofill venue
                       const chosen = shows.find((s) => s.showName === val);
                       if (chosen) {
                         setTxLocation(chosen.venue || "");
@@ -532,7 +521,6 @@ export default function InventoryEquipment({ setPage }) {
                   </select>
                 </div>
 
-                {/* custom event title (overrides / adds) */}
                 <div className="field">
                   <label>Event / Show (optional)</label>
                   <input
@@ -732,4 +720,3 @@ function buildInUseForItem(item, tx) {
     })
     .filter((r) => r.qty > 0);
 }
-
