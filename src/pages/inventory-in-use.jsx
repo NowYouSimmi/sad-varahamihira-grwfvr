@@ -1,3 +1,4 @@
+// src/pages/InventoryInUse.jsx
 import React, { useEffect, useMemo, useState } from "react";
 
 const DATA_URL =
@@ -49,7 +50,7 @@ export default function InventoryInUse({ setPage }) {
     return rows.filter(
       (r) =>
         !q ||
-        r.name.toLowerCase().includes(q) ||
+        (r.name || "").toLowerCase().includes(q) ||
         (r.category || "").toLowerCase().includes(q)
     );
   }, [items, tx, query]);
@@ -57,7 +58,7 @@ export default function InventoryInUse({ setPage }) {
   return (
     <div className="page">
       <h1>Inventory – In Use</h1>
-      <button className="btn ghost" onClick={() => setPage("inventory")}>
+      <button className="btn ghost" onClick={() => setPage("inventory-hub")}>
         ← Back
       </button>
 
@@ -77,7 +78,7 @@ export default function InventoryInUse({ setPage }) {
         !err &&
         inUseList.map((it) => (
           <div key={it.id} className="card">
-            <div className="card-title">{it.name}</div>
+            <div className="card-title">{it.name || "— no name —"}</div>
             <div className="card-sub">
               In use: {it.inUse} / {it.quantity}
             </div>
